@@ -10,6 +10,11 @@ const ConversationSchema = mongoose.Schema({
     required: false,
     unique: false
   },
+  saved: {
+    type: Boolean,
+    required: true,
+    immutable: true
+  },
   name: {
     type: String,
     required: true
@@ -20,6 +25,13 @@ ConversationSchema.statics.addConversation = (conversation, callback) => {
   conversation.save(callback);
 };
 
+ConversationSchema.statics.saveConversation = (conversationObj, callback) => {
+  conversationObj.conversation.save(callback);
+  Message.collection.insert(
+    conversationObj.messages, {ordered: true}
+  )
+};
+
 ConversationSchema.statics.getConversations = (callback) => {
   Conversation.find({}, callback);
 };
@@ -27,7 +39,7 @@ ConversationSchema.statics.getConversations = (callback) => {
 ConversationSchema.statics.getChatRoom = (callback) => {
   Conversation.findOne({name: "chat-room"}, (err, conversation) => {
     if (err || conversation == null) {
-      let chatRoom = new Conversation({name: "chat-room"});
+      let chatRoom = new Conversation({name: "chat-room", saved: false});
       Conversation.addConversation(chatRoom, (err, conv) => {
         if (err) return callback("There was an error on getting the conversation");
         return callback(null, conv);
@@ -47,7 +59,7 @@ ConversationSchema.statics.getChatRoom = (callback) => {
   });
 };
 
-ConversationSchema.statics.getConversationByName = (participant1, participant2, callback) => {
+ConversationSchema.statics.getConversationByParty = (participant1, participant2, callback) => {
   let combo1 = "" + participant1 + "-" + participant2;
   let combo2 = "" + participant2 + "-" + participant1;
 
@@ -74,7 +86,8 @@ ConversationSchema.statics.getConversationByName = (participant1, participant2, 
               let participants = [mihai1, mihai2];
               let newConv = new Conversation({
                 participants: participants,
-                name: "" + mihai1.username + "-" + mihai2.username
+                name: "" + mihai1.username + "-" + mihai2.username,
+                saved: false
               });
 
               Conversation.addConversation(newConv, (err, addedConv) => {
