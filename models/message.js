@@ -24,8 +24,14 @@ const MessageSchema = mongoose.Schema({
   },
 });
 
+const Message = mongoose.model('Message', MessageSchema);
+
 MessageSchema.statics.addMessage = (message, callback) => {
   message.save(callback);
+};
+
+MessageSchema.statics.addMessages = (messages, callback) => {
+  Message.insertMany(messages, {ordered: true}, (callback));
 };
 
 MessageSchema.statics.getMessages = (callback) => {
@@ -36,6 +42,4 @@ MessageSchema.statics.getMessagesByConv = (id, callback) => {
   Message.find({conversationId: id}, callback);
 };
 
-
-const Message = mongoose.model('Message', MessageSchema);
 module.exports = Message;
