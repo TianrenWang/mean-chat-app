@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const Message = require('../models/message');
-const Conversation = require('../models/conversation');
+const {Conversation, SavedConversation} = require('../models/conversation');
 
 // get chat-room conversation
 router.get('/', passport.authenticate("jwt", {session: false}), (req, res, next) => {
@@ -38,6 +38,7 @@ router.get('/:name1/:name2', passport.authenticate("jwt", {session: false}), (re
 
 // post conversation
 router.post('/', passport.authenticate("jwt", {session: false}), (req, res, next) => {
+  console.log("Posting conversation")
   let response = {success: true};
   Conversation.saveConversation(req.body, (err, conversation) => {
     if (err) {

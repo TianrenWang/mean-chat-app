@@ -30,6 +30,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   conversationId: string;
   notify: boolean;
   notification: any = { timeout: null };
+  selectedMessage: Message;
 
   constructor(
     public route: ActivatedRoute,
@@ -80,8 +81,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
           data.conversation._id || data.conversation._doc._id;
         let messages = data.conversation.messages || null;
         if (messages && messages.length > 0) {
-          for (let message of messages) {
-            this.checkMine(message);
+          for (let i in messages) {
+            this.checkMine(messages[i]);
+            messages[i].order = parseInt(i);
           }
           this.noMsg = false;
           this.messageList = messages;
@@ -160,6 +162,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
         this.checkMine(message);
         if (message.conversationId == this.conversationId) {
           this.noMsg = false;
+          message.order = this.messageList.length
           this.messageList.push(message);
           this.scrollToBottom();
           this.msgSound();
@@ -188,6 +191,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
       text: this.sendForm.value.message,
       conversationId: this.conversationId,
       inChatRoom: this.chatWith == 'chat-room',
+      order: this.messageList.length
     };
 
     this.chatService.sendMessage(newMessage, this.chatWith);
@@ -259,5 +263,32 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     if (a.username < b.username) return -1;
     if (a.username > b.username) return 1;
     return 0;
+  }
+
+  onClickMessage(message){
+    if (message == this.selectedMessage) {
+      this.selectedMessage = null;
+    } else if (!this.selectedMessage) {
+      this.selectedMessage = message;
+    } else {
+      let selectedMessageOrder = this.selectedMessage.order;
+      let currentMessageOrder = message.order;
+      if (selectedMessageOrder > currentMessageOrder) {
+        this.saveDialogue(currentMessageOrder, selectedMessageOrder + 1)
+      } else {
+        this.saveDialogue(selectedMessageOrder, currentMessageOrder + 1)
+      }
+      this.selectedMessage = null;
+    }
+  }
+
+  saveDialogue(start, end){
+    this.chatService.saveConversation("Saved Dialogue", this.username, this.messageList.slice(start, end)).subscribe(data => {
+      if (data.success == true) {
+        console.log("Dialogue saved successfully.")
+      } else {
+        console.log("Dialogue not saved successfully.")
+      }
+    });
   }
 }

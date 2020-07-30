@@ -18,12 +18,14 @@ import { AuthService } from "./services/auth.service";
 import { AuthGuard } from "./guards/auth.guard";
 import { ChatService } from "./services/chat.service";
 import { ActiveListComponent } from './components/active-list/active-list.component';
+import { HistoryComponent } from './components/history/history.component';
 
 const appRoutes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
+  { path: 'history', component: HistoryComponent, canActivate: [AuthGuard] },
   { path: 'chat', canActivate: [AuthGuard], children: [
     { path: ':chatWith', component: ChatRoomComponent },
     { path: '**', redirectTo: '/chat/chat-room', pathMatch: 'full' }
@@ -41,7 +43,8 @@ const appRoutes: Routes = [
     ProfileComponent,
     ChatRoomComponent,
     MessageComponent,
-    ActiveListComponent
+    ActiveListComponent,
+    HistoryComponent
   ],
   imports: [
     BrowserModule,

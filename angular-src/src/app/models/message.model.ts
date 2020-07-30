@@ -5,4 +5,5 @@ export interface Message {
   text: string;
   conversationId: string;
   inChatRoom: boolean;
+  order: number;
 }

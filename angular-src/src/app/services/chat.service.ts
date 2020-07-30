@@ -71,6 +71,35 @@ export class ChatService {
     return observableReq;
   }
 
+  saveConversation(convoName: string, userName: string, messages: Message[]): any {
+    let url = this.apiUrl;
+    if (!convoName) {
+      throw new Error('Conversation does not have a name');
+    }
+
+    let authToken = this.authService.getUserData().token;
+
+    // prepare the request
+    let headers = new Headers({
+      'Content-Type': 'application/json',
+      Authorization: authToken,
+    });
+    let options = new RequestOptions({ headers: headers });
+
+    let body = {
+      conversation: {
+        convoName: convoName,
+        userName: userName
+      },
+      messages: messages
+    }
+
+    // POST
+    let observableReq = this.http.post(url, body, options).map(this.extractData);
+
+    return observableReq;
+  }
+
   getUserList(): any {
     let url = this.usersUrl;
 

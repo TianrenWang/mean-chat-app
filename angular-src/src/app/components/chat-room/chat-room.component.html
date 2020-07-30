@@ -14,7 +14,7 @@
           <div *ngIf="noMsg" id="noMsg" class="text-center">
             There are no messages
           </div>
-          <app-message *ngFor="let message of messageList" [message]="message"></app-message>
+          <app-message *ngFor="let message of messageList" [message]="message" (click)="onClickMessage(message)"></app-message>
         </div>
 
         <div class="panel-footer" [ngClass]="{blurred: showActive}">

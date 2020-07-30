@@ -28,10 +28,6 @@ MessageSchema.statics.addMessage = (message, callback) => {
   message.save(callback);
 };
 
-// MessageSchema.statics.addMessages = (messages, callback) => {
-//   Message.insertMany(messages, {ordered: true}, (callback));
-// };
-
 MessageSchema.statics.getMessages = (callback) => {
   Message.find({}, callback);
 };

@@ -3,6 +3,8 @@ const User = require('./user');
 const Message = require('./message');
 const extend = require('util')._extend;
 
+var options = {discriminatorKey: 'kind'};
+
 // conversation schema
 const ConversationSchema = mongoose.Schema({
   participants: {
@@ -10,26 +12,27 @@ const ConversationSchema = mongoose.Schema({
     required: false,
     unique: false
   },
-  saved: {
-    type: Boolean,
-    required: true,
-    immutable: true
-  },
-  name: {
+  convoName: {
     type: String,
     required: true
   }
-});
+}, options);
 
 ConversationSchema.statics.addConversation = (conversation, callback) => {
   conversation.save(callback);
 };
 
 ConversationSchema.statics.saveConversation = (conversationObj, callback) => {
-  conversationObj.conversation.save(callback);
-  Message.collection.insert(
+  let conversation = new SavedConversation(conversationObj.conversation)
+  let convoID = conversation._id.toHexString()
+  let messages = conversationObj.messages
+  for (i = 0; i < messages.length; i++) {
+    messages[i]["conversationId"] = convoID;
+  }
+  Message.collection.insertMany(
     conversationObj.messages, {ordered: true}
   )
+  conversation.save(callback);
 };
 
 ConversationSchema.statics.getConversations = (callback) => {
@@ -37,9 +40,9 @@ ConversationSchema.statics.getConversations = (callback) => {
 };
 
 ConversationSchema.statics.getChatRoom = (callback) => {
-  Conversation.findOne({name: "chat-room"}, (err, conversation) => {
+  Conversation.findOne({convoName: "chat-room"}, (err, conversation) => {
     if (err || conversation == null) {
-      let chatRoom = new Conversation({name: "chat-room", saved: false});
+      let chatRoom = new Conversation({convoName: "chat-room"});
       Conversation.addConversation(chatRoom, (err, conv) => {
         if (err) return callback("There was an error on getting the conversation");
         return callback(null, conv);
@@ -63,9 +66,9 @@ ConversationSchema.statics.getConversationByParty = (participant1, participant2,
   let combo1 = "" + participant1 + "-" + participant2;
   let combo2 = "" + participant2 + "-" + participant1;
 
-  Conversation.findOne({name: combo1}, (err, conversation1) => {
+  Conversation.findOne({convoName: combo1}, (err, conversation1) => {
     if (err || conversation1 == null) {
-      Conversation.findOne({name: combo2}, (err, conversation2) => {
+      Conversation.findOne({convoName: combo2}, (err, conversation2) => {
         if (err || conversation2 == null) {
           User.getUserByUsername(participant1, (err1, user1) => {
             if (err1 || user1 == null) {
@@ -86,8 +89,7 @@ ConversationSchema.statics.getConversationByParty = (participant1, participant2,
               let participants = [mihai1, mihai2];
               let newConv = new Conversation({
                 participants: participants,
-                name: "" + mihai1.username + "-" + mihai2.username,
-                saved: false
+                convoName: "" + mihai1.username + "-" + mihai2.username,
               });
 
               Conversation.addConversation(newConv, (err, addedConv) => {
@@ -133,4 +135,15 @@ ConversationSchema.statics.getConversationByParty = (participant1, participant2,
 
 
 const Conversation = mongoose.model('Conversation', ConversationSchema);
-module.exports = Conversation;
+
+// Saved Conversation schema
+var SavedConversation = Conversation.discriminator('SavedConversation',
+  new mongoose.Schema({
+    userName: {
+      type: String,
+      required: true
+    }
+  }, options));
+
+exports.Conversation = Conversation;
+exports.SavedConversation = SavedConversation;
